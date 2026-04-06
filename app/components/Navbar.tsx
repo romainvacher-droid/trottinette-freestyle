@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import AuthStatus from "./AuthStatus";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
@@ -24,8 +25,11 @@ export default function Navbar() {
           </div>
 
           <div className="hidden md:flex items-center space-x-4">
-            <a href="/login" className="text-zinc-300 hover:text-white">Connexion</a>
-            <a href="/login" className="rounded-full bg-primary px-5 py-2 font-semibold text-white shadow-[0_0_15px_rgba(249,115,22,0.5)] hover:shadow-[0_0_25px_rgba(249,115,22,0.8)] transition">
+            <AuthStatus />
+            <a
+              href="/signup"
+              className="rounded-full bg-primary px-5 py-2 font-semibold text-white shadow-[0_0_15px_rgba(249,115,22,0.5)] hover:shadow-[0_0_25px_rgba(249,115,22,0.8)] transition"
+            >
               Réserver un test
             </a>
           </div>
@@ -53,8 +57,16 @@ export default function Navbar() {
             <a href="#testimonials" className="block px-3 py-2 text-zinc-300 hover:text-white" onClick={() => setOpen(false)}>Témoignages</a>
             <a href="#" className="block px-3 py-2 text-zinc-300 hover:text-white" onClick={() => setOpen(false)}>FAQ</a>
             <a href="#" className="block px-3 py-2 text-zinc-300 hover:text-white" onClick={() => setOpen(false)}>Contact</a>
-            <a href="/login" className="block px-3 py-2 text-zinc-300 hover:text-white" onClick={() => setOpen(false)}>Connexion</a>
-            <a href="/login" className="block mx-auto w-fit mt-4 rounded-full bg-primary px-5 py-2 font-semibold text-white">Réserver un test</a>
+            <div className="pt-2 border-t border-zinc-800">
+              <AuthStatus />
+            </div>
+            <a
+              href="/signup"
+              className="block mx-auto w-fit mt-4 rounded-full bg-primary px-5 py-2 font-bold text-white"
+              onClick={() => setOpen(false)}
+            >
+              Réserver un test
+            </a>
           </div>
         </div>
       )}
