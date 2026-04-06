@@ -1,17 +1,25 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useEffect } from "react";
 import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showCreated, setShowCreated] = useState(false);
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const created = searchParams.get("created");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      if (url.searchParams.get("created") === "1") {
+        setShowCreated(true);
+      }
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,8 +57,7 @@ export default function LoginPage() {
           {error && (
             <div className="p-3 rounded bg-red-900/50 text-red-200 text-sm">{error}</div>
           )}
-
-          {created && (
+          {showCreated && (
             <div className="p-3 rounded bg-secondary/20 text-secondary text-sm">
               Compte créé ✅ Connecte‑toi maintenant.
             </div>
