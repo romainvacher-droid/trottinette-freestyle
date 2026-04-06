@@ -19,7 +19,6 @@ const tricks = [
         {/* Rider feet (simplified) */}
         <circle cx="35" cy="60" r="3" fill="#e5e5e5" />
         <circle cx="65" cy="60" r="3" fill="#e5e5e5" />
-        {/* Animation: up/down */}
       </svg>
     ),
     animation: (
@@ -28,7 +27,7 @@ const tricks = [
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(-15px); }
         }
-        .trick-${"ollie"} svg { animation: ollie 1.5s ease-in-out infinite; }
+        .trick-ollie-active svg { animation: ollie 1.5s ease-in-out infinite; }
       `}</style>
     ),
   },
@@ -40,8 +39,8 @@ const tricks = [
       <svg viewBox="0 0 100 100" className="w-32 h-32 mx-auto">
         <line x1="10" y1="90" x2="90" y2="90" stroke="#84cc16" strokeWidth="2" />
         <rect x="20" y="70" width="60" height="4" fill="#f97316" rx="1" />
-        <circle cx="30" cy="74" r="3" fill="#06b6d4" />
-        <circle cx="70" cy="74" r="3" fill="#06b6d4" />
+        <circle cx="30" cy="74" r="3" fill="#06b6c4" />
+        <circle cx="70" cy="74" r="3" fill="#06b6c4" />
         <circle cx="35" cy="60" r="3" fill="#e5e5e5" />
         <circle cx="65" cy="60" r="3" fill="#e5e5e5" />
       </svg>
@@ -53,7 +52,7 @@ const tricks = [
           50% { transform: translateY(-20px) rotate(180deg); }
           100% { transform: translateY(0) rotate(360deg); }
         }
-        .trick-${"kickflip"} svg { animation: kickflip 2s ease-in-out infinite; }
+        .trick-kickflip-active svg { transform-origin: 50px 60px; animation: kickflip 2s ease-in-out infinite; }
       `}</style>
     ),
   },
@@ -83,7 +82,7 @@ const tricks = [
           0%, 100% { transform: translateX(0); }
           50% { transform: translateX(10px); }
         }
-        .trick-${"grind"} svg { animation: grind 1.5s ease-in-out infinite; }
+        .trick-grind-active svg { animation: grind 1.5s ease-in-out infinite; }
       `}</style>
     ),
   },
@@ -111,7 +110,7 @@ const tricks = [
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
         }
-        .trick-${"barspin"} svg { transform-origin: 50px 70px; animation: barspin 1.5s linear infinite; }
+        .trick-barspin-active svg { transform-origin: 50px 70px; animation: barspin 1.5s linear infinite; }
       `}</style>
     ),
   },
@@ -121,7 +120,7 @@ export default function TricksTutorial() {
   const [active, setActive] = useState<string | null>(null);
 
   return (
-    <section className="py-20 px-4 sm:px-6 lg:px-8 bg-[#0a0a0a]">
+    <section id="tricks" className="py-20 px-4 sm:px-6 lg:px-8 bg-[#0a0a0a]">
       <div className="max-w-6xl mx-auto">
         <h2 className="text-3xl sm:text-4xl font-extrabold text-center mb-4 text-white">
           <span className="text-secondary">Tutoriel</span> Freestyle
@@ -138,8 +137,9 @@ export default function TricksTutorial() {
               className={`p-6 rounded-2xl border ${active === trick.id ? "border-primary bg-primary/10" : "border-zinc-800 bg-zinc-900/60"} transition-all cursor-pointer`}
               onClick={() => setActive(active === trick.id ? null : trick.id)}
             >
-              <div className={`trick-${trick.id} ${active === trick.id ? "" : "opacity-50"}`}>
+              <div className={`trick-${trick.id}-${active === trick.id ? "active" : ""}`}>
                 {trick.animation}
+                {trick.svg}
               </div>
               <h3 className="text-xl font-bold text-white mt-4 mb-2">{trick.name}</h3>
               <p className="text-zinc-300 text-sm">{trick.description}</p>

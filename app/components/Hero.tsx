@@ -32,10 +32,10 @@ export default function Hero() {
             Réserver un test
           </a>
           <a
-            href="#video"
+            href="#tricks"
             className="rounded-full border border-zinc-600 px-8 py-4 text-lg font-medium text-white hover:border-tertiary hover:text-tertiary transition"
           >
-            Voir la vidéo
+            Voir le tuto
           </a>
         </div>
       </div>
