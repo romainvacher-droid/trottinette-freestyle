@@ -1,29 +1,36 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
-    // TODO: integrate real auth
-    if (!email || !password) {
-      setError("Veuillez remplir tous les champs.");
+
+    const res = await signIn("credentials", {
+      email,
+      password,
+      redirect: false,
+    });
+
+    if (res?.error) {
+      setError("Email ou mot de passe invalides");
       setLoading(false);
       return;
     }
-    // Simulate API call
-    setTimeout(() => {
-      alert("Connexion simulée — à connecter avec ton backend + Neon");
-      setLoading(false);
-    }, 1000);
+
+    if (res?.ok) {
+      router.push("/");
+    }
   };
 
   return (
@@ -80,13 +87,13 @@ export default function LoginPage() {
 
         <p className="mt-6 text-center text-zinc-400 text-sm">
           Pas encore de compte ?{" "}
-          <Link href="#" className="text-tertiary hover:underline">
+          <a href="/login?signup=true" className="text-tertiary hover:underline">
             Créer un compte
-          </Link>
+          </a>
         </p>
 
         <p className="mt-4 text-center text-zinc-500 text-xs">
-          Démo : tout est simulé côté front.
+          L’inscription n’est pas encore disponible — en cours de développement.
         </p>
       </div>
     </div>
