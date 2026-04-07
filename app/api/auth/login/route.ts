@@ -74,10 +74,17 @@ export async function POST(request: NextRequest) {
 
     console.log(`[login] NextAuth response status: ${response.status}`);
 
+    // Si NextAuth redirige vers /login (avec callbackUrl), c'est une erreur d'authentification
     if (response.status === 302 || response.status === 301) {
-      await clearFailures(ip);
       const location = response.headers.get('Location');
-      console.log(`[login] success, redirect to ${location}`);
+      console.log(`[login] redirect to ${location}`);
+      // Si la redirection pointe vers /login ou une page d'erreur, c'est un échec
+      if (location && (location.startsWith('/login') || location.includes('error='))) {
+        await recordFailure(ip);
+        return NextResponse.json({ error: 'Email ou mot de passe incorrect' }, { status: 401 });
+      }
+      // Sinon, c'est une redirection vers une page protégée (dashboard, etc.)
+      await clearFailures(ip);
       return NextResponse.json({ success: true, redirectTo: location ?? '/dashboard' });
     }
 
