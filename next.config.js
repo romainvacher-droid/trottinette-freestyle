@@ -6,7 +6,8 @@ const nextConfig = {
     ]
   },
   env: {
-    CUSTOM_KEY: process.env.CUSTOM_KEY
+    CUSTOM_KEY: process.env.CUSTOM_KEY,
+    NEXTAUTH_URL: process.env.NEXTAUTH_URL
   },
   transpilePackages: ['next-auth']
 };
