@@ -1,11 +1,10 @@
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 const FROM_EMAIL = process.env.EMAIL_FROM ?? 'noreply@trottinette-freestyle.vercel.app';
 const SITE_URL = process.env.NEXTAUTH_URL ?? 'https://trottinette-freestyle.vercel.app';
 
 export async function sendPasswordResetEmail(email: string, token: string): Promise<void> {
+  const resend = new Resend(process.env.RESEND_API_KEY);
   const resetUrl = `${SITE_URL}/reset-password?token=${token}&email=${encodeURIComponent(email)}`;
 
   await resend.emails.send({
