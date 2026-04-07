@@ -1,12 +1,17 @@
 export async function verifyTurnstile(token: string): Promise<boolean> {
-  // Token 'disabled' signifie que Turnstile n'est pas configuré, on l'accepte
-  if (token === 'disabled') {
+  const secret = process.env.TURNSTILE_SECRET_KEY;
+
+  if (!secret) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('TURNSTILE_SECRET_KEY manquant en production');
+    }
+    // En développement : accepter sans vérification
     return true;
   }
 
-  const secret = process.env.TURNSTILE_SECRET_KEY;
-  if (!secret) {
-    // Pas de secret configuré, on accepte le token (dev)
+  // Token 'disabled' accepté uniquement hors production
+  if (token === 'disabled') {
+    if (process.env.NODE_ENV === 'production') return false;
     return true;
   }
 
@@ -16,7 +21,7 @@ export async function verifyTurnstile(token: string): Promise<boolean> {
 
   const res = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
     method: 'POST',
-    body: params
+    body: params,
   });
 
   const data = await res.json();

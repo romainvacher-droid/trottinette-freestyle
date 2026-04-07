@@ -6,7 +6,7 @@ import { verifyTurnstile } from '../../../../lib/turnstile';
 
 export async function POST(request: NextRequest) {
   const ip = request.headers.get('x-forwarded-for') ?? 'unknown';
-  if (!checkRateLimit(`signup:${ip}`, 10, 60 * 60 * 1000)) {
+  if (!(await checkRateLimit(`signup:${ip}`, 10, 60 * 60 * 1000))) {
     return NextResponse.json({ error: 'Trop de requêtes. Réessayez plus tard.' }, { status: 429 });
   }
 
@@ -26,13 +26,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Captcha invalide' }, { status: 400 });
     }
 
-    // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return NextResponse.json({ error: 'Email invalide' }, { status: 400 });
     }
 
-    // Password rules: min 8, 1 uppercase, 1 digit
     if (password.length < 8) {
       return NextResponse.json({ error: 'Mot de passe trop court (min 8 caractères)' }, { status: 400 });
     }
@@ -49,13 +47,8 @@ export async function POST(request: NextRequest) {
     }
 
     const passwordHash = await bcrypt.hash(password, 12);
-
     const user = await prisma.user.create({
-      data: {
-        email,
-        name: name ?? null,
-        passwordHash,
-      }
+      data: { email, name: name ?? null, passwordHash },
     });
 
     return NextResponse.json({ ok: true, user: { id: user.id, email: user.email, name: user.name } });

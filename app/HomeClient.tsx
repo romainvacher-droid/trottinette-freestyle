@@ -1,25 +1,9 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 
 export default function HomeClient() {
-  const { data: session } = useSession();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (session) {
-      router.replace('/dashboard');
-    }
-  }, [session, router]);
-
-  if (session) {
-    return null;
-  }
-
   return (
     <div>
       {/* Hero */}
@@ -40,7 +24,7 @@ export default function HomeClient() {
           <div className="grid md:grid-cols-3 gap-8">
             {[
               { title: 'Apprends les tricks', desc: 'Des tutoriels détaillés pour maîtriser les figures de base et avancées.' },
-              { title: 'Rejoins la communauté', desc: 'Échange avec d’autres riders, partage tes vidéos et progresse ensemble.' },
+              { title: 'Rejoins la communauté', desc: 'Échange avec d'autres riders, partage tes vidéos et progresse ensemble.' },
               { title: 'Trouve des spots', desc: 'Une carte collaborative des meilleurs spots de riding près de chez toi.' }
             ].map((f, i) => (
               <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }} className="card p-6 border border-yellow-500/30 hover:border-yellow-500">
@@ -78,9 +62,9 @@ export default function HomeClient() {
           <motion.h2 initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-4xl font-bold text-center text-yellow-400 mb-12">Témoignages</motion.h2>
           <div className="grid md:grid-cols-3 gap-8">
             {[
-              { name: 'Julien, Lyon', text: 'En 2 semaines, j’ai appris mon premier tailwhip grâce aux tutos.' },
+              { name: 'Julien, Lyon', text: 'En 2 semaines, j'ai appris mon premier tailwhip grâce aux tutos.' },
               { name: 'Maya, Paris', text: 'La carte des spots est ultra pratique pour trouver des spots propres près de chez moi.' },
-              { name: 'Thomas, Bordeaux', text: 'La communauté est super bienveillante, j’ai fait énormément de progrès.' }
+              { name: 'Thomas, Bordeaux', text: 'La communauté est super bienveillante, j'ai fait énormément de progrès.' }
             ].map((t, i) => (
               <motion.blockquote key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="card p-6 border-l-4 border-yellow-500 bg-gray-800/50">
                 <p className="text-gray-300 italic mb-4">« {t.text} »</p>

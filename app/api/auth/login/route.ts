@@ -15,12 +15,12 @@ export async function POST(request: NextRequest) {
   const ip = request.headers.get('x-forwarded-for') ?? 'unknown';
   console.log(`[login] attempt from ${ip}`);
 
-  const delay = getFailureDelay(ip);
+  const delay = await getFailureDelay(ip);
   if (delay > 0) {
     await new Promise(resolve => setTimeout(resolve, delay));
   }
 
-  if (!checkRateLimit(`login:${ip}`, 10, 15 * 60 * 1000)) {
+  if (!(await checkRateLimit(`login:${ip}`, 10, 15 * 60 * 1000))) {
     console.warn(`[login] rate limit exceeded for ${ip}`);
     return NextResponse.json({ error: 'Trop de tentatives. Réessayez plus tard.' }, { status: 429 });
   }
@@ -54,7 +54,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Forward to NextAuth credentials callback
     const formData = new URLSearchParams();
     formData.append('email', email);
     formData.append('password', password);
@@ -67,20 +66,20 @@ export async function POST(request: NextRequest) {
       method: 'POST',
       body: formData,
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      redirect: 'manual'
+      redirect: 'manual',
     });
 
     console.log(`[login] NextAuth response status: ${response.status}`);
 
     if (response.status === 302 || response.status === 301) {
-      clearFailures(ip);
+      await clearFailures(ip);
       const location = response.headers.get('Location');
       console.log(`[login] success, redirect to ${location}`);
       return NextResponse.json({ success: true, redirectTo: location ?? '/dashboard' });
     }
 
     if (response.status === 401) {
-      recordFailure(ip);
+      await recordFailure(ip);
     }
 
     const contentType = response.headers.get('content-type');
