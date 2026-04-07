@@ -1,18 +1,15 @@
 export async function verifyTurnstile(token: string): Promise<boolean> {
   const secret = process.env.TURNSTILE_SECRET_KEY;
 
-  if (!secret) {
-    if (process.env.NODE_ENV === 'production') {
-      throw new Error('TURNSTILE_SECRET_KEY manquant en production');
-    }
-    // En développement : accepter sans vérification
+  // Token 'disabled' toujours accepté (Turnstile désactivé)
+  if (token === 'disabled') {
     return true;
   }
 
-  // Token 'disabled' accepté uniquement hors production
-  if (token === 'disabled') {
-    if (process.env.NODE_ENV === 'production') return false;
-    return true;
+  if (!secret) {
+    // Si pas de secret configuré, on ne peut pas vérifier
+    console.warn('TURNSTILE_SECRET_KEY manquant – verification Turnstile impossible');
+    return false;
   }
 
   const params = new URLSearchParams();
