@@ -1,21 +1,25 @@
-import Navbar from "./components/Navbar";
-import Hero from "./components/Hero";
-import Features from "./components/Features";
-import Testimonials from "./components/Testimonials";
-import TricksTutorial from "./components/TricksTutorial";
-import CallToAction from "./components/CallToAction";
-import Footer from "./components/Footer";
+import { Metadata } from 'next';
+import HomeClient from './HomeClient';
 
-export default function Home() {
-  return (
-    <>
-      <Navbar />
-      <Hero />
-      <Features />
-      <Testimonials />
-      <TricksTutorial />
-      <CallToAction />
-      <Footer />
-    </>
-  );
+export const metadata = {
+  title: 'Trottinette Freestyle – Maîtrise l\'art du ride urbain',
+  description: 'La plateforme des passionnés de trottinette freestyle. Apprends les tricks, rejoins la communauté, trouve les meilleurs spots.',
+  openGraph: {
+    title: 'Trottinette Freestyle',
+    description: 'Apprends les tricks, rejoins la communauté, trouve les meilleurs spots',
+    url: 'https://trottinette-freestyle.vercel.app',
+    type: 'website',
+    images: [{ url: '/og-image.jpg', width: 1200, height: 630 }]
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Trottinette Freestyle',
+    description: 'Apprends les tricks, rejoins la communauté, trouve les meilleurs spots',
+    images: ['/og-image.jpg']
+  },
+  robots: { index: true, follow: true }
+};
+
+export default function HomePage() {
+  return <HomeClient />;
 }
