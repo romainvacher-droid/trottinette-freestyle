@@ -24,7 +24,7 @@ export default function LoginPage() {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, callbackUrl: '/dashboard', turnstileToken })
+        body: JSON.stringify({ email, password, callbackUrl: '/dashboard', turnstileToken }),
       });
       const data = await res.json();
       if (!res.ok || !data?.success) {
@@ -40,85 +40,94 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex">
-      <div className="hidden md:flex w-1/2 bg-gradient-to-br from-yellow-900 to-gray-900 items-center justify-center p-12">
+    <div className="min-h-screen flex bg-[#0a0a0a]">
+      {/* Panneau gauche */}
+      <div className="hidden md:flex w-1/2 bg-gradient-to-br from-zinc-900 to-black items-center justify-center p-12 border-r border-zinc-800">
         <div className="text-center">
-          <h2 className="text-4xl font-bold text-yellow-300 mb-4">Ride Libre.</h2>
-          <p className="text-gray-200 mb-6">La communauté des riders urbains.</p>
-          <p className="text-gray-400">Pas encore inscrit ?</p>
-          <Link href="/signup" className="mt-4 inline-block border border-yellow-400 text-yellow-400 px-6 py-3 rounded hover:bg-yellow-400 hover:text-black transition">Créer un compte</Link>
+          <Link href="/" className="text-3xl font-extrabold text-white mb-6 block">
+            TROTTINETTE<span className="text-primary">.</span>
+          </Link>
+          <h2 className="text-2xl font-bold text-white mb-3">Ride Libre.</h2>
+          <p className="text-zinc-400 mb-8">La communauté des riders urbains.</p>
+          <p className="text-zinc-500 text-sm mb-3">Pas encore inscrit ?</p>
+          <Link
+            href="/signup"
+            className="inline-block rounded-full border border-primary text-primary px-6 py-3 hover:bg-primary hover:text-black transition font-semibold"
+          >
+            Créer un compte gratuit
+          </Link>
         </div>
       </div>
 
-      <div className="w-full md:w-1/2 flex items-center justify-center bg-gray-900 p-8">
+      {/* Formulaire */}
+      <div className="w-full md:w-1/2 flex items-center justify-center p-8">
         <div className="max-w-md w-full">
-          <h1 className="text-3xl font-bold text-yellow-400 mb-6">Connexion</h1>
-          {error && <div className="bg-red-900/80 text-white p-3 rounded mb-4 border border-red-700">{error}</div>}
+          <div className="md:hidden mb-8 text-center">
+            <Link href="/" className="text-2xl font-extrabold text-white">
+              TROTTINETTE<span className="text-primary">.</span>
+            </Link>
+          </div>
+          <h1 className="text-3xl font-extrabold text-white mb-2">Connexion</h1>
+          <p className="text-zinc-400 text-sm mb-6">Content de te revoir 👋</p>
+
+          {error && (
+            <div className="bg-red-900/80 text-white p-3 rounded-xl mb-4 border border-red-700 text-sm">{error}</div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-gray-400 mb-1">Email</label>
+              <label htmlFor="email" className="block text-zinc-400 text-sm mb-1">Email</label>
               <input
-                id="email"
-                type="email"
-                required
-                autoComplete="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                className="w-full bg-gray-800 border border-gray-700 rounded p-3 text-white focus:outline-none focus:border-yellow-500 transition"
+                id="email" type="email" required autoComplete="email"
+                value={email} onChange={e => setEmail(e.target.value)}
+                className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary transition"
+                placeholder="ton@email.com"
               />
             </div>
             <div>
-              <label htmlFor="password" className="block text-gray-400 mb-1">Mot de passe</label>
+              <label htmlFor="password" className="block text-zinc-400 text-sm mb-1">Mot de passe</label>
               <div className="relative">
                 <input
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  required
-                  autoComplete="current-password"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  className="w-full bg-gray-800 border border-gray-700 rounded p-3 pr-12 text-white focus:outline-none focus:border-yellow-500 transition"
+                  id="password" type={showPassword ? 'text' : 'password'} required autoComplete="current-password"
+                  value={password} onChange={e => setPassword(e.target.value)}
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-xl px-4 py-3 pr-12 text-white focus:outline-none focus:border-primary transition"
+                  placeholder="••••••••"
                 />
                 <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-yellow-400"
-                  aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                  type="button" onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-primary"
+                  aria-label={showPassword ? 'Masquer' : 'Afficher'}
                 >
                   {showPassword ? '👁️' : '👁️‍🗨️'}
                 </button>
               </div>
-            </div>
-            <div className="flex justify-end">
-              <Link href="/forgot-password" className="text-sm text-yellow-400 hover:underline">Mot de passe oublié ?</Link>
-            </div>
-
-            <div className="flex justify-center">
-              <Turnstile onToken={setTurnstileToken} />
-              {/* Fallback checkbox car Turnstile désactivé */}
-              <div className="flex items-center gap-2 text-gray-400 text-sm">
-                <input
-                  type="checkbox"
-                  id="no-robot"
-                  className="rounded"
-                  checked={turnstileToken === 'disabled'}
-                  onChange={e => setTurnstileToken(e.target.checked ? 'disabled' : null)}
-                />
-                <label htmlFor="no-robot">Je ne suis pas un robot</label>
+              <div className="flex justify-end mt-1">
+                <Link href="/forgot-password" className="text-xs text-primary hover:underline">Mot de passe oublié ?</Link>
               </div>
             </div>
 
+            <div className="flex items-center gap-2 text-zinc-400 text-sm py-1">
+              <Turnstile onToken={setTurnstileToken} />
+              <input
+                type="checkbox" id="no-robot" className="rounded accent-yellow-400"
+                checked={turnstileToken === 'disabled'}
+                onChange={e => setTurnstileToken(e.target.checked ? 'disabled' : null)}
+              />
+              <label htmlFor="no-robot">Je ne suis pas un robot</label>
+            </div>
+
             <button
-              type="submit"
-              disabled={loading || !turnstileToken}
-              className="w-full bg-yellow-500 text-black font-bold py-3 rounded hover:bg-yellow-400 disabled:opacity-50 transition"
+              type="submit" disabled={loading || !turnstileToken}
+              className="w-full rounded-full bg-primary py-3 font-bold text-black hover:opacity-90 disabled:opacity-50 transition"
             >
               {loading ? 'Connexion…' : 'Se connecter'}
             </button>
           </form>
-          <div className="mt-6 text-center text-gray-400">
-            Pas encore inscrit ? <Link href="/signup" className="text-yellow-400 hover:underline">Créer un compte</Link>
-          </div>
+
+          <p className="mt-6 text-center text-zinc-500 text-sm">
+            Pas encore inscrit ?{' '}
+            <Link href="/signup" className="text-primary hover:underline">Créer un compte</Link>
+          </p>
         </div>
       </div>
     </div>
