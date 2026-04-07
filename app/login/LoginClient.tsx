@@ -27,7 +27,7 @@ export default function LoginPage() {
         body: JSON.stringify({ email, password, callbackUrl: '/dashboard', turnstileToken })
       });
       const data = await res.json();
-      if (!res.ok) {
+      if (!res.ok || !data?.success) {
         setError(data.error || 'Email ou mot de passe incorrect');
       } else {
         window.location.href = data.redirectTo ?? '/dashboard';
