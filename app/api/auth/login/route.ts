@@ -16,7 +16,6 @@ function isSafeRedirect(url: string, baseOrigin: string): boolean {
 
 export async function POST(request: NextRequest) {
   const ip = request.headers.get('x-forwarded-for') ?? 'unknown';
-  console.log(`[login] attempt from ${ip}`);
 
   const delay = await getFailureDelay(ip);
   if (delay > 0) {
@@ -24,7 +23,6 @@ export async function POST(request: NextRequest) {
   }
 
   if (!(await checkRateLimit(`login:${ip}`, 10, 15 * 60 * 1000))) {
-    console.warn(`[login] rate limit exceeded for ${ip}`);
     return NextResponse.json({ error: 'Trop de tentatives. Réessayez plus tard.' }, { status: 429 });
   }
 
@@ -32,19 +30,16 @@ export async function POST(request: NextRequest) {
     const { email, password, callbackUrl, turnstileToken } = await request.json();
 
     if (!email || !password) {
-      console.warn(`[login] missing credentials from ${ip}`);
       return NextResponse.json({ error: 'Email et mot de passe requis' }, { status: 400 });
     }
 
     if (!turnstileToken) {
-      console.warn(`[login] missing turnstile from ${ip}`);
       return NextResponse.json({ error: 'Captcha requis' }, { status: 400 });
     }
 
     if (turnstileToken !== 'disabled') {
       const turnstileValid = await verifyTurnstile(turnstileToken);
       if (!turnstileValid) {
-        console.warn(`[login] invalid turnstile from ${ip}`);
         return NextResponse.json({ error: 'Captcha invalide' }, { status: 400 });
       }
     }
@@ -53,55 +48,72 @@ export async function POST(request: NextRequest) {
     if (callbackUrl) {
       const baseOrigin = request.nextUrl.origin;
       if (isSafeRedirect(callbackUrl, baseOrigin)) {
-        safeCallbackUrl = new URL(callbackUrl, baseOrigin).pathname + new URL(callbackUrl, baseOrigin).search;
+        const parsed = new URL(callbackUrl, baseOrigin);
+        safeCallbackUrl = parsed.pathname + parsed.search;
       }
-    }
-
-    const formData = new URLSearchParams();
-    formData.append('email', email);
-    formData.append('password', password);
-    if (safeCallbackUrl !== '/dashboard') {
-      formData.append('callbackUrl', safeCallbackUrl);
     }
 
     const baseUrl = request.nextUrl.origin;
+
+    // Étape 1 : obtenir le CSRF token depuis NextAuth (obligatoire en v4)
+    const csrfRes = await fetch(`${baseUrl}/api/auth/csrf`, {
+      headers: { 'Cookie': request.headers.get('cookie') ?? '' },
+    });
+    const { csrfToken } = await csrfRes.json();
+    const csrfSetCookie = csrfRes.headers.get('set-cookie') ?? '';
+    const csrfCookiePart = csrfSetCookie.split(';')[0]; // "name=value" uniquement
+
+    // Combiner les cookies client avec le cookie CSRF
+    const clientCookies = request.headers.get('cookie') ?? '';
+    const allCookies = [clientCookies, csrfCookiePart].filter(Boolean).join('; ');
+
+    // Étape 2 : appeler le callback NextAuth avec le CSRF token
+    const formData = new URLSearchParams();
+    formData.append('csrfToken', csrfToken);
+    formData.append('email', email);
+    formData.append('password', password);
+    formData.append('callbackUrl', safeCallbackUrl);
+
     const response = await fetch(`${baseUrl}/api/auth/callback/credentials`, {
       method: 'POST',
       body: formData,
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Cookie': allCookies,
+      },
       redirect: 'manual',
     });
 
-    console.log(`[login] NextAuth response status: ${response.status}`);
-
-    // Si NextAuth redirige vers /login (avec callbackUrl), c'est une erreur d'authentification
     if (response.status === 302 || response.status === 301) {
-      const location = response.headers.get('Location');
-      console.log(`[login] redirect to ${location}`);
-      // Si la redirection pointe vers /login ou une page d'erreur, c'est un échec
-      if (location && (location.startsWith('/login') || location.includes('error='))) {
+      const location = response.headers.get('Location') ?? '';
+
+      // Normaliser en chemin relatif (NextAuth renvoie parfois une URL absolue)
+      let locationPath: string;
+      try {
+        const parsed = new URL(location, baseUrl);
+        locationPath = parsed.pathname + parsed.search;
+      } catch {
+        locationPath = location;
+      }
+
+      // Si redirigé vers /login → échec d'authentification
+      if (locationPath.startsWith('/login') || locationPath.includes('error=')) {
         await recordFailure(ip);
         return NextResponse.json({ error: 'Email ou mot de passe incorrect' }, { status: 401 });
       }
-      // Sinon, c'est une redirection vers une page protégée (dashboard, etc.)
+
+      // Succès — transmettre le cookie de session au client
       await clearFailures(ip);
-      return NextResponse.json({ success: true, redirectTo: location ?? '/dashboard' });
+      const result = NextResponse.json({ success: true, redirectTo: locationPath });
+      const sessionCookie = response.headers.get('set-cookie');
+      if (sessionCookie) {
+        result.headers.set('set-cookie', sessionCookie);
+      }
+      return result;
     }
 
-    if (response.status === 401) {
-      await recordFailure(ip);
-    }
-
-    const contentType = response.headers.get('content-type');
-    if (contentType?.includes('application/json')) {
-      const data = await response.json();
-      console.warn(`[login] NextAuth error:`, data);
-      return NextResponse.json({ error: 'Email ou mot de passe incorrect' }, { status: response.status });
-    }
-
-    const text = await response.text();
-    console.warn(`[login] NextAuth text error:`, text);
-    return NextResponse.json({ error: text || 'Erreur inconnue' }, { status: response.status });
+    await recordFailure(ip);
+    return NextResponse.json({ error: 'Email ou mot de passe incorrect' }, { status: 401 });
   } catch (err: any) {
     console.error('[login] exception:', err);
     return NextResponse.json({ error: err.message }, { status: 500 });
