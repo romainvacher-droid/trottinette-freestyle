@@ -1,30 +1,65 @@
-const requests = new Map<string, number[]>();
-const failures = new Map<string, number>(); // IP -> count
+import { Redis } from '@upstash/redis';
 
-export function checkRateLimit(key: string, limit: number, windowMs: number): boolean {
+// In-memory fallback for local dev (no Redis configured)
+const memRequests = new Map<string, number[]>();
+const memFailures = new Map<string, number>();
+
+let redis: Redis | null = null;
+if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+  redis = new Redis({
+    url: process.env.UPSTASH_REDIS_REST_URL,
+    token: process.env.UPSTASH_REDIS_REST_TOKEN,
+  });
+}
+
+export async function checkRateLimit(key: string, limit: number, windowMs: number): Promise<boolean> {
+  if (!redis) {
+    const now = Date.now();
+    const timestamps = memRequests.get(key) ?? [];
+    const valid = timestamps.filter(t => now - t < windowMs);
+    if (valid.length >= limit) return false;
+    valid.push(now);
+    memRequests.set(key, valid);
+    return true;
+  }
+
   const now = Date.now();
-  const timestamps = requests.get(key) ?? [];
+  const rlKey = `rl:${key}`;
 
-  const valid = timestamps.filter(t => now - t < windowMs);
-  if (valid.length >= limit) return false;
+  await redis.zremrangebyscore(rlKey, 0, now - windowMs);
+  const count = await redis.zcard(rlKey);
 
-  valid.push(now);
-  requests.set(key, valid);
+  if (count >= limit) return false;
+
+  await redis.zadd(rlKey, { score: now, member: `${now}:${Math.random()}` });
+  await redis.pexpire(rlKey, windowMs);
+
   return true;
 }
 
-export function getFailureDelay(ip: string): number {
-  const count = failures.get(ip) ?? 0;
-  if (count >= 10) return 15 * 60 * 1000; // 15 min block
-  if (count >= 5) return 1000 * Math.pow(2, count - 4); // 1s, 2s, 4s...
+export async function getFailureDelay(ip: string): Promise<number> {
+  const count = redis
+    ? ((await redis.get<number>(`failures:${ip}`)) ?? 0)
+    : (memFailures.get(ip) ?? 0);
+
+  if (count >= 10) return 15 * 60 * 1000;
+  if (count >= 5) return 1000 * Math.pow(2, count - 4);
   return 0;
 }
 
-export function recordFailure(ip: string) {
-  const count = (failures.get(ip) ?? 0) + 1;
-  failures.set(ip, count);
+export async function recordFailure(ip: string): Promise<void> {
+  if (redis) {
+    await redis.incr(`failures:${ip}`);
+    await redis.expire(`failures:${ip}`, 24 * 60 * 60);
+  } else {
+    memFailures.set(ip, (memFailures.get(ip) ?? 0) + 1);
+  }
 }
 
-export function clearFailures(ip: string) {
-  failures.delete(ip);
+export async function clearFailures(ip: string): Promise<void> {
+  if (redis) {
+    await redis.del(`failures:${ip}`);
+  } else {
+    memFailures.delete(ip);
+  }
 }

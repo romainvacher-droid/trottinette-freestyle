@@ -2,14 +2,17 @@
 const nextConfig = {
   images: {
     remotePatterns: [
-      { protocol: 'https', hostname: '**' }
-    ]
+      // Avatars Google OAuth
+      { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
+      // Avatars GitHub OAuth
+      { protocol: 'https', hostname: 'avatars.githubusercontent.com' },
+    ],
   },
   env: {
     CUSTOM_KEY: process.env.CUSTOM_KEY,
-    NEXTAUTH_URL: process.env.NEXTAUTH_URL
+    // NEXTAUTH_URL n'a pas besoin d'être exposé côté client
   },
-  transpilePackages: ['next-auth']
+  transpilePackages: ['next-auth'],
 };
 
 module.exports = nextConfig;
